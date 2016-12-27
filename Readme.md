@@ -10,3 +10,10 @@ You need to install SDL2 and SDL2-gfx
 # ArchLinux
 $ sudo pacman -S sdl2_gfx
 ```
+
+## Running
+
+To run the SDL example run
+```Shell
+$ cargo run --release --example sdl
+```
