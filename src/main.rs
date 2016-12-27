@@ -2,6 +2,7 @@ extern crate sdl2;
 extern crate rand;
 
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::channel;
 use std::{thread, time};
 
 use rand::Rng;
@@ -107,6 +108,10 @@ fn initialize(renderer: &mut Renderer, world: &Mutex<World>) {
     *world_lock = World::new();
 }
 
+enum ThreadCommand {
+    Reset
+}
+
 fn main() {
 
     let sdl_context = sdl2::init().unwrap();
@@ -124,10 +129,14 @@ fn main() {
 
 
     initialize(&mut renderer, &world);
-
+    let (tx, rx) = channel();
     let update_world = world.clone();
     thread::spawn(move|| {
         loop {
+            match rx.try_recv() {
+                Ok(ThreadCommand::Reset) => *update_world.lock().unwrap() = World::new(),
+                _ => (),
+            }
             let mut world_copy = update_world.lock().unwrap().clone();
             world_copy.update();
             *update_world.lock().unwrap() = world_copy;
@@ -154,27 +163,26 @@ fn main() {
 
         renderer.set_draw_color(pixels::Color::RGB(0, 0, 0));
         renderer.clear();
-        {
-            let mut visible_counter = 0; // Number of visible stars
+        let mut visible_counter = 0; // Number of visible stars
 
-            {
-                let world_lock = world.lock().unwrap();
-                for star in &world_lock.stars {
-                    if star.position.x >= 0f64 && star.position.x <= SCREEN_WIDTH as f64 &&
-                        star.position.y >= 0f64 && star.position.y <= SCREEN_HEIGHT as f64 {
-                            visible_counter += 1;
-                        }
-                    renderer.pixel(star.position.x as i16, star.position.y as i16, 0xFFFFFFFFu32).unwrap();
+        // lock context
+        {
+            let world_lock = world.lock().unwrap();
+            for star in &world_lock.stars {
+                if star.position.x >= 0f64 && star.position.x <= SCREEN_WIDTH as f64 &&
+                    star.position.y >= 0f64 && star.position.y <= SCREEN_HEIGHT as f64 {
+                        visible_counter += 1;
                 }
+                renderer.pixel(star.position.x as i16, star.position.y as i16, 0xFFFFFFFFu32).unwrap();
             }
-            let threshold = STAR_COUNT / 2;
-            println!("Stars visible: {}/{}, Threshold: {}", visible_counter, STAR_COUNT, threshold);
-            if visible_counter < threshold {
-                initialize(&mut renderer, &world);
-            }
+        }
+        let threshold = STAR_COUNT / 2;
+        println!("Stars visible: {}/{}, Threshold: {}", visible_counter, STAR_COUNT, threshold);
+        if visible_counter < threshold {
+            println!("Reset world!");
+            tx.send(ThreadCommand::Reset).expect("Sending command to worker failed");
         }
         renderer.present();
         thread::sleep(time::Duration::from_millis(15));
-
     }
 }
