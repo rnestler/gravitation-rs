@@ -9,6 +9,7 @@ use rand::Rng;
 use sdl2::event::Event;
 use sdl2::pixels;
 use sdl2::keyboard::Keycode;
+use sdl2::render::Renderer;
 
 use sdl2::gfx::primitives::DrawRenderer;
 
@@ -97,6 +98,15 @@ impl World {
     }
 }
 
+fn initialize(renderer: &mut Renderer, world: &Mutex<World>) {
+    renderer.set_draw_color(pixels::Color::RGB(0, 0, 0));
+    renderer.clear();
+    renderer.present();
+
+    let mut world_lock = world.lock().unwrap();
+    *world_lock = World::new();
+}
+
 fn main() {
 
     let sdl_context = sdl2::init().unwrap();
@@ -109,64 +119,62 @@ fn main() {
         .unwrap();
 
     let mut renderer = window.renderer().build().unwrap();
+    let mut events = sdl_context.event_pump().unwrap();
+    let world = Arc::new(Mutex::new(World::new()));
 
-    'program: loop {
+
+    initialize(&mut renderer, &world);
+
+    let update_world = world.clone();
+    thread::spawn(move|| {
+        loop {
+            let mut world_copy = update_world.lock().unwrap().clone();
+            world_copy.update();
+            *update_world.lock().unwrap() = world_copy;
+        }
+    });
+
+    'main: loop {
+        for event in events.poll_iter() {
+
+            match event {
+
+                Event::Quit {..} => break 'main,
+
+                Event::KeyDown {keycode: Some(keycode), ..} => {
+                    if keycode == Keycode::Escape {
+                        break 'main
+                    }
+                }
+
+                _ => {
+                }
+            }
+        }
+
         renderer.set_draw_color(pixels::Color::RGB(0, 0, 0));
         renderer.clear();
-        renderer.present();
+        {
+            let mut visible_counter = 0; // Number of visible stars
 
-        let mut events = sdl_context.event_pump().unwrap();
-
-        let world = Arc::new(Mutex::new(World::new()));
-
-        let update_world = world.clone();
-        thread::spawn(move|| {
-            loop {
-                let mut world_copy = update_world.lock().unwrap().clone();
-                world_copy.update();
-                *update_world.lock().unwrap() = world_copy;
-            }
-        });
-
-        'main: loop {
-            for event in events.poll_iter() {
-
-                match event {
-
-                    Event::Quit {..} => break 'program,
-
-                    Event::KeyDown {keycode: Some(keycode), ..} => {
-                        if keycode == Keycode::Escape {
-                            break 'program
-                        }
-                    }
-
-                    _ => {
-                    }
-                }
-            }
-
-            renderer.set_draw_color(pixels::Color::RGB(0, 0, 0));
-            renderer.clear();
             {
                 let world_lock = world.lock().unwrap();
-                let mut visible_counter = 0; // Number of visible stars
                 for star in &world_lock.stars {
                     if star.position.x >= 0f64 && star.position.x <= SCREEN_WIDTH as f64 &&
-                       star.position.y >= 0f64 && star.position.y <= SCREEN_HEIGHT as f64 {
-                           visible_counter += 1;
-                    }
+                        star.position.y >= 0f64 && star.position.y <= SCREEN_HEIGHT as f64 {
+                            visible_counter += 1;
+                        }
                     renderer.pixel(star.position.x as i16, star.position.y as i16, 0xFFFFFFFFu32).unwrap();
                 }
-                let threshold = STAR_COUNT / 2;
-                println!("Stars visible: {}/{}, Threshold: {}", visible_counter, STAR_COUNT, threshold);
-                if visible_counter < threshold {
-                    break 'main
-                }
             }
-            renderer.present();
-            thread::sleep(time::Duration::from_millis(15));
-
+            let threshold = STAR_COUNT / 2;
+            println!("Stars visible: {}/{}, Threshold: {}", visible_counter, STAR_COUNT, threshold);
+            if visible_counter < threshold {
+                initialize(&mut renderer, &world);
+            }
         }
+        renderer.present();
+        thread::sleep(time::Duration::from_millis(15));
+
     }
 }
