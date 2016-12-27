@@ -91,9 +91,9 @@ impl World {
             }
         }
 
-        for i in 0..self.stars.len() {
-            self.stars[i].position.x += self.stars[i].speed.x;
-            self.stars[i].position.y += self.stars[i].speed.y;
+        for star in &mut self.stars {
+            star.position.x += star.speed.x;
+            star.position.y += star.speed.y;
         }
     }
 }
