@@ -133,11 +133,12 @@ fn main() {
     let update_world = world.clone();
     thread::spawn(move|| {
         loop {
-            match rx.try_recv() {
-                Ok(ThreadCommand::Reset) => *update_world.lock().unwrap() = World::new(),
+            let mut world_copy = match rx.try_recv() {
+                Ok(ThreadCommand::Reset) => World::new(),
                 _ => (),
             }
-            let mut world_copy = update_world.lock().unwrap().clone();
+                _ => update_world.lock().unwrap().clone(),
+            };
             world_copy.update();
             *update_world.lock().unwrap() = world_copy;
         }
