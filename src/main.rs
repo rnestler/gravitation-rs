@@ -116,7 +116,7 @@ fn main() {
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsys = sdl_context.video().unwrap();
-    let window = video_subsys.window("rust-sdl2_gfx: draw line & FPSManager", SCREEN_WIDTH, SCREEN_HEIGHT)
+    let window = video_subsys.window("Gravity simulation", SCREEN_WIDTH, SCREEN_HEIGHT)
         .position_centered()
         .opengl()
         .fullscreen()
