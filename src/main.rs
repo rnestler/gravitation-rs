@@ -58,7 +58,11 @@ impl World {
         let mut stars = vec![];
         for _ in 0..STAR_COUNT {
             let (x, y) = rng.gen::<(f64, f64)>();
-            stars.push(Star::new(width as f64 * x, height as f64 * y));
+            let mut star = Star::new(width as f64 * x, height as f64 * y);
+
+            star.speed.x = (star.position.y - (height as f64) / 2.0) / (height as f64 * 50.0);
+            star.speed.y = -(star.position.x - (width as f64) / 2.0) / (width as f64 * 50.0);
+            stars.push(star);
         }
         World {
             width: width,
