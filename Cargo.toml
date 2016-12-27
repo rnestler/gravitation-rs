@@ -1,0 +1,12 @@
+[package]
+name = "gravitation"
+version = "0.1.0"
+authors = ["Raphael Nestler <raphael.nestler@gmail.com>"]
+
+[dependencies]
+rand = "0.3"
+
+[dependencies.sdl2]
+version = "*"
+features = ["gfx"]
+
