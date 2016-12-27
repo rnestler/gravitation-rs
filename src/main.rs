@@ -47,19 +47,23 @@ impl Star {
 
 #[derive(Clone)]
 struct World {
+    pub width: u32,
+    pub height: u32,
     pub stars: Vec<Star>,
 }
 
 impl World {
-    pub fn new() -> World {
+    pub fn new(width: u32, height: u32) -> World {
         let mut rng = rand::thread_rng();
         let mut stars = vec![];
         for _ in 0..STAR_COUNT {
             let (x, y) = rng.gen::<(f64, f64)>();
-            stars.push(Star::new(SCREEN_WIDTH as f64 * x, SCREEN_HEIGHT as f64 * y));
+            stars.push(Star::new(width as f64 * x, height as f64 * y));
         }
         World {
-            stars: stars
+            width: width,
+            height: height,
+            stars: stars,
         }
     }
 
@@ -105,7 +109,7 @@ fn initialize(renderer: &mut Renderer, world: &Mutex<World>) {
     renderer.present();
 
     let mut world_lock = world.lock().unwrap();
-    *world_lock = World::new();
+    *world_lock = World::new(SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
 enum ThreadCommand {
@@ -125,7 +129,7 @@ fn main() {
 
     let mut renderer = window.renderer().build().unwrap();
     let mut events = sdl_context.event_pump().unwrap();
-    let world = Arc::new(Mutex::new(World::new()));
+    let world = Arc::new(Mutex::new(World::new(SCREEN_WIDTH, SCREEN_HEIGHT)));
 
 
     initialize(&mut renderer, &world);
@@ -134,9 +138,7 @@ fn main() {
     thread::spawn(move|| {
         loop {
             let mut world_copy = match rx.try_recv() {
-                Ok(ThreadCommand::Reset) => World::new(),
-                _ => (),
-            }
+                Ok(ThreadCommand::Reset) => World::new(SCREEN_WIDTH, SCREEN_HEIGHT),
                 _ => update_world.lock().unwrap().clone(),
             };
             world_copy.update();
