@@ -1,11 +1,13 @@
 extern crate piston_window;
 extern crate gravitation;
+extern crate rand;
 
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::channel;
 use std::{thread, time};
 
 use piston_window::*;
+use rand::Rng;
 
 use gravitation::*;
 
@@ -17,18 +19,24 @@ enum ThreadCommand {
     Reset
 }
 
+fn make_world() -> World {
+    let mut rng = rand::thread_rng();
+    let prng_init: (u32, u32, u32, u32) = rng.gen();
+    World::new(SCREEN_WIDTH, SCREEN_HEIGHT, STAR_COUNT, Some(prng_init))
+}
+
 fn main() {
     let mut window: PistonWindow =
         WindowSettings::new("Gravitation", [SCREEN_WIDTH, SCREEN_HEIGHT])
         .exit_on_esc(true).fullscreen(true).build().unwrap();
 
-    let world = Arc::new(Mutex::new(World::new(SCREEN_WIDTH, SCREEN_HEIGHT, STAR_COUNT)));
+    let world = Arc::new(Mutex::new(make_world()));
     let (tx, rx) = channel();
     let update_world = world.clone();
     thread::spawn(move|| {
         loop {
             let mut world_copy = match rx.try_recv() {
-                Ok(ThreadCommand::Reset) => World::new(SCREEN_WIDTH, SCREEN_HEIGHT, STAR_COUNT),
+                Ok(ThreadCommand::Reset) => make_world(),
                 _ => update_world.lock().unwrap().clone(),
             };
             world_copy.update();
