@@ -6,6 +6,7 @@ authors = ["Raphael Nestler <raphael.nestler@gmail.com>"]
 [dev-dependencies]
 rand = "0.3"
 piston_window = "0.60"
+time = "0.1"
 
 [dev-dependencies.sdl2]
 version = "*"

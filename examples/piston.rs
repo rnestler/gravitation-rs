@@ -1,10 +1,11 @@
 extern crate piston_window;
 extern crate gravitation;
 extern crate rand;
+extern crate time;
 
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::channel;
-use std::{thread, time};
+use std::thread;
 
 use piston_window::*;
 use rand::Rng;
@@ -35,12 +36,17 @@ fn main() {
     let update_world = world.clone();
     thread::spawn(move|| {
         loop {
-            let mut world_copy = match rx.try_recv() {
-                Ok(ThreadCommand::Reset) => make_world(),
-                _ => update_world.lock().unwrap().clone(),
-            };
-            world_copy.update();
-            *update_world.lock().unwrap() = world_copy;
+            let start = time::precise_time_s();
+            for _ in 0..1000 {
+                let mut world_copy = match rx.try_recv() {
+                    Ok(ThreadCommand::Reset) => make_world(),
+                    _ => update_world.lock().unwrap().clone(),
+                };
+                world_copy.update();
+                *update_world.lock().unwrap() = world_copy;
+            }
+            let stop = time::precise_time_s();
+            println!("cycle time: {}s/1000", stop-start);
         }
     });
 
@@ -48,18 +54,16 @@ fn main() {
         window.draw_2d(&e, |c, g| {
             clear([0.0; 4], g);
             let mut visible_counter = 0; // Number of visible stars
-            {
-                let world_lock = world.lock().unwrap();
-                for star in &world_lock.stars {
-                    if star.position.x >= 0f64 && star.position.x <= SCREEN_WIDTH as f64 &&
-                        star.position.y >= 0f64 && star.position.y <= SCREEN_HEIGHT as f64 {
-                            visible_counter += 1;
-                        }
-                    let size = 5.0;
-                    ellipse([1.0, 1.0, 1.0, 1.0],
-                            [star.position.x, star.position.y, size, size],
-                            c.transform, g);
-                }
+            let world_copy = world.lock().unwrap().clone();
+            for star in &world_copy.stars {
+                if star.position.x >= 0f64 && star.position.x <= SCREEN_WIDTH as f64 &&
+                    star.position.y >= 0f64 && star.position.y <= SCREEN_HEIGHT as f64 {
+                        visible_counter += 1;
+                    }
+                let size = 5.0;
+                ellipse([1.0, 1.0, 1.0, 1.0],
+                        [star.position.x, star.position.y, size, size],
+                        c.transform, g);
             }
             let threshold = STAR_COUNT / 2;
             if visible_counter < threshold {
