@@ -66,8 +66,11 @@ impl World {
     pub fn update(&mut self) {
         for i in 0..self.stars.len() {
             for j in i+1..self.stars.len() {
-                let dis_x = self.stars[i].position.x - self.stars[j].position.x;
-                let dis_y = self.stars[i].position.y - self.stars[j].position.y;
+                let mut star_i = self.stars[i].clone();
+                let mut star_j = self.stars[j].clone();
+
+                let dis_x = star_i.position.x - star_j.position.x;
+                let dis_y = star_i.position.y - star_j.position.y;
                 let dis_2 = dis_x * dis_x + dis_y * dis_y;
 
                 if dis_2 > 3.0 {
@@ -76,10 +79,10 @@ impl World {
                     let speed_x = dis_x / dis_3;
                     let speed_y = dis_y / dis_3;
 
-                    self.stars[i].speed.x -= speed_x;
-                    self.stars[i].speed.y -= speed_y;
-                    self.stars[j].speed.x += speed_x;
-                    self.stars[j].speed.y += speed_y;
+                    star_i.speed.x -= speed_x;
+                    star_i.speed.y -= speed_y;
+                    star_j.speed.x += speed_x;
+                    star_j.speed.y += speed_y;
                 }
                 else if dis_2 < 2.5 {
                     let dis = dis_2.sqrt();
@@ -87,29 +90,32 @@ impl World {
                     let speed_x = dis_x / dis_3;
                     let speed_y = dis_y / dis_3;
 
-                    self.stars[i].speed.x += speed_x;
-                    self.stars[i].speed.y += speed_y;
-                    self.stars[j].speed.x -= speed_x;
-                    self.stars[j].speed.y -= speed_y;
+                    star_i.speed.x += speed_x;
+                    star_i.speed.y += speed_y;
+                    star_j.speed.x -= speed_x;
+                    star_j.speed.y -= speed_y;
                 }
                 else {
                     /*
-                    let speed_x = (self.stars[i].speed.x + self.stars[j].speed.x) * 0.5 * 0.001;
-                    let speed_y = (self.stars[i].speed.y + self.stars[j].speed.y) * 0.5 * 0.001;
+                    let speed_x = (star_i.speed.x + star_j.speed.x) * 0.5 * 0.001;
+                    let speed_y = (star_i.speed.y + star_j.speed.y) * 0.5 * 0.001;
 
-                    self.stars[i].speed.x = self.stars[i].speed.x * 0.999 + speed_x;
-                    self.stars[i].speed.y = self.stars[i].speed.y * 0.999 + speed_y;
-                    self.stars[j].speed.x = self.stars[j].speed.x * 0.999 + speed_x;
-                    self.stars[j].speed.y = self.stars[j].speed.y * 0.999 + speed_y;
+                    star_i.speed.x = star_i.speed.x * 0.999 + speed_x;
+                    star_i.speed.y = star_i.speed.y * 0.999 + speed_y;
+                    star_j.speed.x = star_j.speed.x * 0.999 + speed_x;
+                    star_j.speed.y = star_j.speed.y * 0.999 + speed_y;
                     */
 
-                    let speed_x = (self.stars[i].speed.x + self.stars[j].speed.x) * 0.5;
-                    let speed_y = (self.stars[i].speed.y + self.stars[j].speed.y) * 0.5;
-                    self.stars[i].speed.x = speed_x;
-                    self.stars[i].speed.y = speed_y;
-                    self.stars[j].speed.x = speed_x;
-                    self.stars[j].speed.y = speed_y;
+                    let speed_x = (star_i.speed.x + star_j.speed.x) * 0.5;
+                    let speed_y = (star_i.speed.y + star_j.speed.y) * 0.5;
+                    star_i.speed.x = speed_x;
+                    star_i.speed.y = speed_y;
+                    star_j.speed.x = speed_x;
+                    star_j.speed.y = speed_y;
                 }
+
+                self.stars[i] = star_i;
+                self.stars[j] = star_j;
             }
         }
 
