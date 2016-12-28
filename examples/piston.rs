@@ -1,10 +1,11 @@
 extern crate piston_window;
 extern crate gravitation;
 extern crate rand;
+extern crate time;
 
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::channel;
-use std::{thread, time};
+use std::thread;
 
 use piston_window::*;
 use rand::Rng;
@@ -35,12 +36,17 @@ fn main() {
     let update_world = world.clone();
     thread::spawn(move|| {
         loop {
-            let mut world_copy = match rx.try_recv() {
-                Ok(ThreadCommand::Reset) => make_world(),
-                _ => update_world.lock().unwrap().clone(),
-            };
-            world_copy.update();
-            *update_world.lock().unwrap() = world_copy;
+            let start = time::precise_time_s();
+            for _ in 0..1000 {
+                let mut world_copy = match rx.try_recv() {
+                    Ok(ThreadCommand::Reset) => make_world(),
+                    _ => update_world.lock().unwrap().clone(),
+                };
+                world_copy.update();
+                *update_world.lock().unwrap() = world_copy;
+            }
+            let stop = time::precise_time_s();
+            println!("cycle time: {}s/1000", stop-start);
         }
     });
 
