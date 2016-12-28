@@ -6,6 +6,9 @@ authors = ["Raphael Nestler <raphael.nestler@gmail.com>"]
 [dependencies]
 rand = "0.3"
 
+[dev-dependencies]
+piston_window = "*"
+
 [dev-dependencies.sdl2]
 version = "*"
 features = ["gfx"]
