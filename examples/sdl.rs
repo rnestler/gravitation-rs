@@ -1,7 +1,6 @@
 extern crate sdl2;
 extern crate gravitation;
-
-use gravitation::*;
+extern crate rand;
 
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::channel;
@@ -10,29 +9,26 @@ use std::{thread, time};
 use sdl2::event::Event;
 use sdl2::pixels;
 use sdl2::keyboard::Keycode;
-use sdl2::render::Renderer;
-
 use sdl2::gfx::primitives::DrawRenderer;
+use rand::Rng;
+
+use gravitation::*;
 
 const SCREEN_WIDTH: u32 = 1920;
 const SCREEN_HEIGHT: u32 = 1080;
 const STAR_COUNT: u32 = 100;
 
-fn initialize(renderer: &mut Renderer, world: &Mutex<World>) {
-    renderer.set_draw_color(pixels::Color::RGB(0, 0, 0));
-    renderer.clear();
-    renderer.present();
-
-    let mut world_lock = world.lock().unwrap();
-    *world_lock = World::new(SCREEN_WIDTH, SCREEN_HEIGHT, STAR_COUNT);
-}
-
 enum ThreadCommand {
     Reset
 }
 
-fn main() {
+fn make_world() -> World {
+    let mut rng = rand::thread_rng();
+    let prng_init: (u32, u32, u32, u32) = rng.gen();
+    World::new(SCREEN_WIDTH, SCREEN_HEIGHT, STAR_COUNT, Some(prng_init))
+}
 
+fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsys = sdl_context.video().unwrap();
     let window = video_subsys.window("Gravity simulation", SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -44,16 +40,19 @@ fn main() {
 
     let mut renderer = window.renderer().build().unwrap();
     let mut events = sdl_context.event_pump().unwrap();
-    let world = Arc::new(Mutex::new(World::new(SCREEN_WIDTH, SCREEN_HEIGHT, STAR_COUNT)));
+    let world = Arc::new(Mutex::new(make_world()));
 
+    // Initialize renderer
+    renderer.set_draw_color(pixels::Color::RGB(0, 0, 0));
+    renderer.clear();
+    renderer.present();
 
-    initialize(&mut renderer, &world);
     let (tx, rx) = channel();
     let update_world = world.clone();
     thread::spawn(move|| {
         loop {
             let mut world_copy = match rx.try_recv() {
-                Ok(ThreadCommand::Reset) => World::new(SCREEN_WIDTH, SCREEN_HEIGHT, STAR_COUNT),
+                Ok(ThreadCommand::Reset) => make_world(),
                 _ => update_world.lock().unwrap().clone(),
             };
             world_copy.update();

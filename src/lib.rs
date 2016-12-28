@@ -1,6 +1,9 @@
-extern crate rand;
+extern crate core;
 
-use rand::Rng;
+mod random;
+
+use core::u32;
+
 
 #[derive(Clone)]
 pub struct Dimension {
@@ -37,11 +40,16 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(width: u32, height: u32, star_count: u32) -> World {
-        let mut rng = rand::thread_rng();
+    pub fn new(width: u32, height: u32, star_count: u32,
+               prng_init: Option<(u32, u32, u32, u32)>) -> World {
         let mut stars = vec![];
+        let mut rng = match prng_init {
+            Some(init) => random::Xorshift128::init(init),
+            None => random::Xorshift128::new(),
+        };
         for _ in 0..star_count {
-            let (x, y) = rng.gen::<(f64, f64)>();
+            let x = rng.next() as f64 / u32::MAX as f64;
+            let y = rng.next() as f64 / u32::MAX as f64;
             let mut star = Star::new(width as f64 * x, height as f64 * y);
 
             star.speed.x = (star.position.y - (height as f64) / 2.0) / (height as f64 * 50.0);

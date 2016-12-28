@@ -3,7 +3,7 @@ name = "gravitation"
 version = "0.1.0"
 authors = ["Raphael Nestler <raphael.nestler@gmail.com>"]
 
-[dependencies]
+[dev-dependencies]
 rand = "0.3"
 
 [dev-dependencies.sdl2]
