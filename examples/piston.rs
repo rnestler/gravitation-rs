@@ -54,18 +54,16 @@ fn main() {
         window.draw_2d(&e, |c, g| {
             clear([0.0; 4], g);
             let mut visible_counter = 0; // Number of visible stars
-            {
-                let world_lock = world.lock().unwrap();
-                for star in &world_lock.stars {
-                    if star.position.x >= 0f64 && star.position.x <= SCREEN_WIDTH as f64 &&
-                        star.position.y >= 0f64 && star.position.y <= SCREEN_HEIGHT as f64 {
-                            visible_counter += 1;
-                        }
-                    let size = 5.0;
-                    ellipse([1.0, 1.0, 1.0, 1.0],
-                            [star.position.x, star.position.y, size, size],
-                            c.transform, g);
-                }
+            let world_copy = world.lock().unwrap().clone();
+            for star in &world_copy.stars {
+                if star.position.x >= 0f64 && star.position.x <= SCREEN_WIDTH as f64 &&
+                    star.position.y >= 0f64 && star.position.y <= SCREEN_HEIGHT as f64 {
+                        visible_counter += 1;
+                    }
+                let size = 5.0;
+                ellipse([1.0, 1.0, 1.0, 1.0],
+                        [star.position.x, star.position.y, size, size],
+                        c.transform, g);
             }
             let threshold = STAR_COUNT / 2;
             if visible_counter < threshold {
