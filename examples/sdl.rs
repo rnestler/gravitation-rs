@@ -18,6 +18,9 @@ const SCREEN_WIDTH: u32 = 1920;
 const SCREEN_HEIGHT: u32 = 1080;
 const STAR_COUNT: usize = 100;
 
+const REVERSE_GRAVITY: f64 = 1000.0;
+const STAR_SIZE: f64 = 1.0;
+
 enum ThreadCommand {
     Reset
 }
@@ -25,7 +28,7 @@ enum ThreadCommand {
 fn make_world() -> World {
     let mut rng = rand::thread_rng();
     let prng_init: (u32, u32, u32, u32) = rng.gen();
-    World::new(SCREEN_WIDTH, SCREEN_HEIGHT, STAR_COUNT, Some(prng_init))
+    World::new(SCREEN_WIDTH, SCREEN_HEIGHT, STAR_COUNT, Some(prng_init), REVERSE_GRAVITY, STAR_SIZE)
 }
 
 fn main() {

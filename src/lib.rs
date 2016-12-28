@@ -36,12 +36,15 @@ impl Star {
 pub struct World {
     pub width: u32,
     pub height: u32,
+    pub reverse_gravity: f64,
+    pub star_size: f64,
     pub stars: Vec<Star>,
 }
 
 impl World {
     pub fn new(width: u32, height: u32, star_count: usize,
-               prng_init: Option<(u32, u32, u32, u32)>) -> World {
+               prng_init: Option<(u32, u32, u32, u32)>,
+               reverse_gravity: f64, star_size: f64) -> World {
         let mut stars = vec![];
         let mut rng = match prng_init {
             Some(init) => random::Xorshift128::init(init),
@@ -60,10 +63,13 @@ impl World {
             width: width,
             height: height,
             stars: stars,
+            reverse_gravity: reverse_gravity,
+            star_size: star_size,
         }
     }
 
     pub fn update(&mut self) {
+        let limit_touching = self.star_size * self.star_size;
         for i in 0..self.stars.len() {
             for j in i+1..self.stars.len() {
                 let mut star_i = self.stars[i].clone();
@@ -73,9 +79,9 @@ impl World {
                 let dis_y = star_i.position.y - star_j.position.y;
                 let dis_2 = dis_x * dis_x + dis_y * dis_y;
 
-                if dis_2 > 3.0 {
+                if dis_2 > limit_touching {
                     let dis = dis_2.sqrt();
-                    let dis_3 = dis_2 * dis * 1000.0;
+                    let dis_3 = dis_2 * dis * self.reverse_gravity;
                     let speed_x = dis_x / dis_3;
                     let speed_y = dis_y / dis_3;
 
@@ -84,9 +90,9 @@ impl World {
                     star_j.speed.x += speed_x;
                     star_j.speed.y += speed_y;
                 }
-                else if dis_2 < 2.5 {
+                else if dis_2 < limit_touching / 2.0 {
                     let dis = dis_2.sqrt();
-                    let dis_3 = dis * 500.0;
+                    let dis_3 = dis * self.reverse_gravity * 2.0;
                     let speed_x = dis_x / dis_3;
                     let speed_y = dis_y / dis_3;
 
