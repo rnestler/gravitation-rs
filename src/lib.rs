@@ -40,7 +40,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(width: u32, height: u32, star_count: u32,
+    pub fn new(width: u32, height: u32, star_count: usize,
                prng_init: Option<(u32, u32, u32, u32)>) -> World {
         let mut stars = vec![];
         let mut rng = match prng_init {
@@ -123,6 +123,13 @@ impl World {
             star.position.x += star.speed.x;
             star.position.y += star.speed.y;
         }
+    }
+
+    pub fn count_visible(&self) -> usize {
+        self.stars.iter().filter(|star| {
+            star.position.x >= 0f64 && star.position.x <= self.width as f64 &&
+                star.position.y >= 0f64 && star.position.y <= self.height as f64
+        }).count()
     }
 }
 
