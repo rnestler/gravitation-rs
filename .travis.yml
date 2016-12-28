@@ -1,0 +1,9 @@
+sudo: true
+language: rust
+rust:
+  - stable
+before_script:
+  - echo "yes" | sudo add-apt-repository "deb http://archive.ubuntu.com/ubuntu trusty main universe restricted multiverse"
+  - |
+      sudo apt-get update -qq &&
+      sudo apt-get -qq install libsdl2-dev libsdl2-gfx-dev
