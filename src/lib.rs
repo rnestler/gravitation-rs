@@ -12,6 +12,16 @@ pub struct Dimension {
     pub z: f64,
 }
 
+impl Dimension {
+    pub fn new() -> Dimension {
+        Dimension {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Star {
     pub position: Dimension,
