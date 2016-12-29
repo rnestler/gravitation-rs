@@ -9,6 +9,7 @@ use core::u32;
 pub struct Dimension {
     pub x: f64,
     pub y: f64,
+    pub z: f64,
 }
 
 #[derive(Clone)]
@@ -18,15 +19,17 @@ pub struct Star {
 }
 
 impl Star {
-    pub fn new(x: f64, y: f64) -> Star {
+    pub fn new(x: f64, y: f64, z: f64) -> Star {
         Star {
             position: Dimension {
                 x: x,
                 y: y,
+                z: z,
             },
             speed: Dimension {
                 x: 0.0,
                 y: 0.0,
+                z: 0.0,
             }
         }
     }
@@ -36,13 +39,14 @@ impl Star {
 pub struct World {
     pub width: u32,
     pub height: u32,
+    pub deepness: u32,
     pub reverse_gravity: f64,
     pub star_size: f64,
     pub stars: Vec<Star>,
 }
 
 impl World {
-    pub fn new(width: u32, height: u32, star_count: usize,
+    pub fn new(width: u32, height: u32, deepness: u32, star_count: usize,
                prng_init: Option<(u32, u32, u32, u32)>,
                reverse_gravity: f64, star_size: f64) -> World {
         let mut stars = vec![];
@@ -53,15 +57,17 @@ impl World {
         for _ in 0..star_count {
             let x = rng.next() as f64 / u32::MAX as f64;
             let y = rng.next() as f64 / u32::MAX as f64;
-            let mut star = Star::new(width as f64 * x, height as f64 * y);
+            let z = rng.next() as f64 / u32::MAX as f64;
+            let mut star = Star::new(width as f64 * x, height as f64 * y, deepness as f64 * z);
 
-            star.speed.x = (star.position.y - (height as f64) / 2.0) / (height as f64 * 50.0);
-            star.speed.y = -(star.position.x - (width as f64) / 2.0) / (width as f64 * 50.0);
+            //star.speed.x = (star.position.y - (height as f64) / 2.0) / (height as f64 * 50.0);
+            //star.speed.y = -(star.position.x - (width as f64) / 2.0) / (width as f64 * 50.0);
             stars.push(star);
         }
         World {
             width: width,
             height: height,
+            deepness: deepness,
             stars: stars,
             reverse_gravity: reverse_gravity,
             star_size: star_size,
@@ -77,47 +83,62 @@ impl World {
 
                 let dis_x = star_i.position.x - star_j.position.x;
                 let dis_y = star_i.position.y - star_j.position.y;
-                let dis_2 = dis_x * dis_x + dis_y * dis_y;
+                let dis_z = star_i.position.z - star_j.position.z;
+                let dis_2 = dis_x * dis_x + dis_y * dis_y + dis_z * dis_z;
 
                 if dis_2 > limit_touching {
                     let dis = dis_2.sqrt();
                     let dis_3 = dis_2 * dis * self.reverse_gravity;
                     let speed_x = dis_x / dis_3;
                     let speed_y = dis_y / dis_3;
+                    let speed_z = dis_z / dis_3;
 
                     star_i.speed.x -= speed_x;
                     star_i.speed.y -= speed_y;
+                    star_i.speed.z -= speed_z;
                     star_j.speed.x += speed_x;
                     star_j.speed.y += speed_y;
+                    star_j.speed.z += speed_z;
                 }
                 else if dis_2 < limit_touching / 2.0 {
                     let dis = dis_2.sqrt();
-                    let dis_3 = dis * self.reverse_gravity * 2.0;
+                    let dis_3 = dis_2 * dis * self.reverse_gravity;// * 2.0;
                     let speed_x = dis_x / dis_3;
                     let speed_y = dis_y / dis_3;
+                    let speed_z = dis_z / dis_3;
 
                     star_i.speed.x += speed_x;
                     star_i.speed.y += speed_y;
+                    star_i.speed.z += speed_z;
                     star_j.speed.x -= speed_x;
                     star_j.speed.y -= speed_y;
+                    star_i.speed.z -= speed_z;
                 }
                 else {
+                    let filter = 0.999;
+                    let speed_x = (star_i.speed.x + star_j.speed.x) * 0.5 * (1.0 - filter);
+                    let speed_y = (star_i.speed.y + star_j.speed.y) * 0.5 * (1.0 - filter);
+                    let speed_z = (star_i.speed.z + star_j.speed.z) * 0.5 * (1.0 - filter);
+
+                    star_i.speed.x = star_i.speed.x * filter + speed_x;
+                    star_i.speed.y = star_i.speed.y * filter + speed_y;
+                    star_i.speed.z = star_i.speed.z * filter + speed_z;
+
+                    star_j.speed.x = star_j.speed.x * filter + speed_x;
+                    star_j.speed.y = star_j.speed.y * filter + speed_y;
+                    star_j.speed.z = star_j.speed.z * filter + speed_z;
+
                     /*
-                    let speed_x = (star_i.speed.x + star_j.speed.x) * 0.5 * 0.001;
-                    let speed_y = (star_i.speed.y + star_j.speed.y) * 0.5 * 0.001;
-
-                    star_i.speed.x = star_i.speed.x * 0.999 + speed_x;
-                    star_i.speed.y = star_i.speed.y * 0.999 + speed_y;
-                    star_j.speed.x = star_j.speed.x * 0.999 + speed_x;
-                    star_j.speed.y = star_j.speed.y * 0.999 + speed_y;
-                    */
-
                     let speed_x = (star_i.speed.x + star_j.speed.x) * 0.5;
                     let speed_y = (star_i.speed.y + star_j.speed.y) * 0.5;
+                    let speed_z = (star_i.speed.z + star_j.speed.z) * 0.5;
                     star_i.speed.x = speed_x;
                     star_i.speed.y = speed_y;
+                    star_i.speed.z = speed_z;
                     star_j.speed.x = speed_x;
                     star_j.speed.y = speed_y;
+                    star_j.speed.z = speed_z;
+                    */
                 }
 
                 self.stars[i] = star_i;
@@ -128,6 +149,7 @@ impl World {
         for star in &mut self.stars {
             star.position.x += star.speed.x;
             star.position.y += star.speed.y;
+            star.position.z += star.speed.z;
         }
     }
 

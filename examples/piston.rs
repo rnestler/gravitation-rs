@@ -14,10 +14,11 @@ use gravitation::*;
 
 const SCREEN_WIDTH: u32 = 1920;
 const SCREEN_HEIGHT: u32 = 1080;
+const SCREEN_DEEPNESS: u32 = 1000;
 const STAR_COUNT: usize = 300;
 
-const REVERSE_GRAVITY: f64 = 500.0;
-const STAR_SIZE: f64 = 4.0;
+const REVERSE_GRAVITY: f64 = 50.0;
+const STAR_SIZE: f64 = 20.0;
 
 enum ThreadCommand {
     Reset
@@ -26,7 +27,7 @@ enum ThreadCommand {
 fn make_world() -> World {
     let mut rng = rand::thread_rng();
     let prng_init: (u32, u32, u32, u32) = rng.gen();
-    World::new(SCREEN_WIDTH, SCREEN_HEIGHT, STAR_COUNT, Some(prng_init), REVERSE_GRAVITY, STAR_SIZE)
+    World::new(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_DEEPNESS, STAR_COUNT, Some(prng_init), REVERSE_GRAVITY, STAR_SIZE)
 }
 
 struct Stats {
@@ -63,12 +64,19 @@ fn main() {
         window.draw_2d(&e, |c, g| {
             clear([0.0; 4], g);
             let world_copy = world.lock().unwrap().clone();
+            let mut mean_color = 0.0;
             for star in &world_copy.stars {
-                let size = 5.0;
-                ellipse([1.0, 1.0, 1.0, 1.0],
-                        [star.position.x, star.position.y, size, size],
+                //let color = ((star.speed.x * star.speed.x * star.speed.y * star.speed.y).sqrt() * 1000.0) as f32;
+                //let red = (star.speed.x * 10.0) as f32;
+                //let green = (star.speed.y * 10.0) as f32;
+                let color = 2.0 - (star.position.z * 2.0 / SCREEN_DEEPNESS as f64) as f32;
+                ellipse([1.0, 1.0, 1.0, color],
+                        [star.position.x, star.position.y, world_copy.star_size * color as f64, world_copy.star_size * color as f64],
                         c.transform, g);
+                mean_color += color;
             }
+            println!("{}", mean_color / world_copy.stars.len() as f32);
+
             let visible_counter = world_copy.count_visible();
             let cycles_per_s = stats.lock().unwrap().cycles_per_s;
             println!("Cycles/s: {}", cycles_per_s);

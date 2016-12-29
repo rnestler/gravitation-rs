@@ -16,10 +16,11 @@ use gravitation::*;
 
 const SCREEN_WIDTH: u32 = 1920;
 const SCREEN_HEIGHT: u32 = 1080;
-const STAR_COUNT: usize = 100;
+const SCREEN_DEEPNESS: u32 = 1000;
+const STAR_COUNT: usize = 300;
 
-const REVERSE_GRAVITY: f64 = 1000.0;
-const STAR_SIZE: f64 = 1.0;
+const REVERSE_GRAVITY: f64 = 50.0;
+const STAR_SIZE: f64 = 20.0;
 
 enum ThreadCommand {
     Reset
@@ -28,7 +29,7 @@ enum ThreadCommand {
 fn make_world() -> World {
     let mut rng = rand::thread_rng();
     let prng_init: (u32, u32, u32, u32) = rng.gen();
-    World::new(SCREEN_WIDTH, SCREEN_HEIGHT, STAR_COUNT, Some(prng_init), REVERSE_GRAVITY, STAR_SIZE)
+    World::new(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_DEEPNESS, STAR_COUNT, Some(prng_init), REVERSE_GRAVITY, STAR_SIZE)
 }
 
 fn main() {
@@ -86,16 +87,26 @@ fn main() {
 
         let world_copy = world.lock().unwrap().clone();
         for star in &world_copy.stars {
-            if star.position.x >= 0f64 && star.position.x <= SCREEN_WIDTH as f64 &&
-                star.position.y >= 0f64 && star.position.y <= SCREEN_HEIGHT as f64 {
-                }
-            renderer.pixel(star.position.x as i16, star.position.y as i16, 0xFFFFFFFFu32).unwrap();
+            let mut color = 255.0 - (star.position.z * 255.0 / SCREEN_DEEPNESS as f64);
+            if color < 0.0 {
+                color = 0.0;
+            } else if color > 255.0 {
+                color = 255.0;
+            }
+
+            let mut size = (2.0 - (star.position.z * 2.0 / SCREEN_DEEPNESS as f64)) * world_copy.star_size;
+            if size < 0.0 {
+                size = 0.0;
+            } else if size > 65535.0 {
+                size = 65535.0;
+            }
+
+            renderer.filled_circle(star.position.x as i16, star.position.y as i16, size as i16, (color as u32) << 24 | 0x00FFFFFFu32).unwrap();
         }
+
         let visible_counter = world_copy.count_visible();
         let threshold = STAR_COUNT / 2;
-        println!("Stars visible: {}/{}, Threshold: {}", visible_counter, STAR_COUNT, threshold);
         if visible_counter < threshold {
-            println!("Reset world!");
             tx.send(ThreadCommand::Reset).expect("Sending command to worker failed");
         }
         renderer.present();
