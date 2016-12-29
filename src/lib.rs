@@ -38,7 +38,9 @@ impl Star {
 #[derive(Clone)]
 pub struct World {
     pub width: u32,
+    pub width_2: f64,
     pub height: u32,
+    pub height_2: f64,
     pub deepness: u32,
     pub reverse_gravity: f64,
     pub star_size: f64,
@@ -54,19 +56,25 @@ impl World {
             Some(init) => random::Xorshift128::init(init),
             None => random::Xorshift128::new(),
         };
+        let width_2 = width as f64 / 2.0;
+        let height_2 = height as f64 / 2.0;
         for _ in 0..star_count {
             let x = rng.next() as f64 / u32::MAX as f64;
             let y = rng.next() as f64 / u32::MAX as f64;
             let z = rng.next() as f64 / u32::MAX as f64;
-            let mut star = Star::new(width as f64 * x, height as f64 * y, deepness as f64 * z);
+
+            let mut star = Star::new(width as f64 * x - width_2, height as f64 * y - height_2, deepness as f64 * z);
 
             //star.speed.x = (star.position.y - (height as f64) / 2.0) / (height as f64 * 50.0);
             //star.speed.y = -(star.position.x - (width as f64) / 2.0) / (width as f64 * 50.0);
+            //star.speed.z = 0.001;
             stars.push(star);
         }
         World {
             width: width,
+            width_2: width_2,
             height: height,
+            height_2: height_2,
             deepness: deepness,
             stars: stars,
             reverse_gravity: reverse_gravity,
@@ -155,8 +163,8 @@ impl World {
 
     pub fn count_visible(&self) -> usize {
         self.stars.iter().filter(|star| {
-            star.position.x >= 0f64 && star.position.x <= self.width as f64 &&
-                star.position.y >= 0f64 && star.position.y <= self.height as f64
+            star.position.x >= -self.width_2 && star.position.x <= self.width_2 as f64 &&
+                star.position.y >= -self.height_2 && star.position.y <= self.height_2 as f64
         }).count()
     }
 }

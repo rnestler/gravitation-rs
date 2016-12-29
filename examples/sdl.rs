@@ -87,21 +87,29 @@ fn main() {
 
         let world_copy = world.lock().unwrap().clone();
         for star in &world_copy.stars {
-            let mut color = 255.0 - (star.position.z * 255.0 / SCREEN_DEEPNESS as f64);
-            if color < 0.0 {
-                color = 0.0;
-            } else if color > 255.0 {
-                color = 255.0;
+
+            let zoom_factor = star.position.z * 2.0 / SCREEN_DEEPNESS as f64;
+
+            let mut size = (2.0 - zoom_factor) * world_copy.star_size;
+            let mut alpha = 255.0 / zoom_factor;
+            if alpha < 0.0 {
+                alpha = 0.0
+            } else if alpha > 255.0 {
+                alpha = 255.0
             }
 
-            let mut size = (2.0 - (star.position.z * 2.0 / SCREEN_DEEPNESS as f64)) * world_copy.star_size;
-            if size < 0.0 {
-                size = 0.0;
+            if size < 1.0 {
+                size = 1.0;
             } else if size > 65535.0 {
                 size = 65535.0;
             }
 
-            renderer.filled_circle(star.position.x as i16, star.position.y as i16, size as i16, (color as u32) << 24 | 0x00FFFFFFu32).unwrap();
+            if star.position.z > 0.1 {
+                let pos_x = world_copy.width_2 + star.position.x / (zoom_factor);
+                let pos_y = world_copy.height_2 + star.position.y / (zoom_factor);
+
+                renderer.filled_circle(pos_x as i16, pos_y as i16, size as i16, (alpha as u32) << 24 | 0x00FFFFFFu32).unwrap();
+            }
         }
 
         let visible_counter = world_copy.count_visible();
