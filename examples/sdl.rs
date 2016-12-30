@@ -23,13 +23,15 @@ const REVERSE_GRAVITY: f64 = 50.0;
 const STAR_SIZE: f64 = 20.0;
 
 enum ThreadCommand {
-    Reset
+    Reset,
 }
 
 fn make_world() -> World {
     let mut rng = rand::thread_rng();
     let prng_init: (u32, u32, u32, u32) = rng.gen();
-    World::new(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_DEEPNESS, STAR_COUNT, Some(prng_init), REVERSE_GRAVITY, STAR_SIZE)
+    let mut world = World::new(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_DEEPNESS, REVERSE_GRAVITY, STAR_SIZE);
+    world.add_random_stars(STAR_COUNT, Some(prng_init));
+    world
 }
 
 fn main() {

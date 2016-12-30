@@ -58,37 +58,49 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(width: u32, height: u32, deepness: u32, star_count: usize,
-               prng_init: Option<(u32, u32, u32, u32)>,
+    pub fn new(width: u32, height: u32, deepness: u32,
                reverse_gravity: f64, star_size: f64) -> World {
-        let mut stars = vec![];
-        let mut rng = match prng_init {
-            Some(init) => random::Xorshift128::init(init),
-            None => random::Xorshift128::new(),
-        };
         let width_2 = width as f64 / 2.0;
         let height_2 = height as f64 / 2.0;
-        for _ in 0..star_count {
-            let x = rng.next() as f64 / u32::MAX as f64;
-            let y = rng.next() as f64 / u32::MAX as f64;
-            let z = rng.next() as f64 / u32::MAX as f64;
-
-            let mut star = Star::new(width as f64 * x - width_2, height as f64 * y - height_2, deepness as f64 * z);
-
-            //star.speed.x = (star.position.y - (height as f64) / 2.0) / (height as f64 * 50.0);
-            //star.speed.y = -(star.position.x - (width as f64) / 2.0) / (width as f64 * 50.0);
-            //star.speed.z = 0.001;
-            stars.push(star);
-        }
         World {
             width: width,
             width_2: width_2,
             height: height,
             height_2: height_2,
             deepness: deepness,
-            stars: stars,
+            stars: vec![],
             reverse_gravity: reverse_gravity,
             star_size: star_size,
+        }
+    }
+
+    pub fn add_random_stars(&mut self, star_count: usize,
+                            prng_init: Option<(u32, u32, u32, u32)>) {
+        let mut rng = match prng_init {
+            Some(init) => random::Xorshift128::init(init),
+            None => random::Xorshift128::new(),
+        };
+        for _ in 0..star_count {
+            let x = rng.next() as f64 / u32::MAX as f64;
+            let y = rng.next() as f64 / u32::MAX as f64;
+            let z = rng.next() as f64 / u32::MAX as f64;
+
+            let mut star = Star::new(self.width as f64 * x - self.width_2, self.height as f64 * y - self.height_2, self.deepness as f64 * z);
+
+            //star.speed.x = (star.position.y - (height as f64) / 2.0) / (height as f64 * 50.0);
+            //star.speed.y = -(star.position.x - (width as f64) / 2.0) / (width as f64 * 50.0);
+            //star.speed.z = (star.position.y - height_2) / (height_2 * 50.0);
+
+            star.speed.y = (star.position.y - (self.height as f64) / 2.0) / (self.height as f64 * 50.0);
+            star.speed.x = (star.position.x - (self.width as f64) / 2.0) / (self.width as f64 * 50.0);
+            star.speed.z = (star.position.z - (self.deepness as f64) / 2.0) / (self.deepness as f64 * 50.0);
+
+
+            //star.position.x = 0.0;
+            //star.position.y = 0.0;
+            //star.position.z = 100.0;
+            //star.speed.z = -0.001;
+            self.stars.push(star);
         }
     }
 
