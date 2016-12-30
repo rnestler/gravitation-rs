@@ -24,6 +24,7 @@ const STAR_SIZE: f64 = 20.0;
 
 enum ThreadCommand {
     Reset,
+    Pause,
 }
 
 fn make_world() -> World {
@@ -56,13 +57,22 @@ fn main() {
     let (tx, rx) = channel();
     let update_world = world.clone();
     thread::spawn(move|| {
+        let mut running = true;
         loop {
             let mut world_copy = match rx.try_recv() {
                 Ok(ThreadCommand::Reset) => make_world(),
+                Ok(ThreadCommand::Pause) => {
+                    running = !running;
+                    update_world.lock().unwrap().clone()
+                },
                 _ => update_world.lock().unwrap().clone(),
             };
-            world_copy.update();
-            *update_world.lock().unwrap() = world_copy;
+            if running {
+                world_copy.update();
+                *update_world.lock().unwrap() = world_copy;
+            } else {
+                thread::sleep(time::Duration::from_millis(1));
+            }
         }
     });
 
@@ -103,6 +113,9 @@ fn main() {
                             camera_speed.y -= 1.0;
                         }
                         Keycode::Space => {
+                            tx.send(ThreadCommand::Pause).unwrap();
+                        }
+                        Keycode::Backspace => {
                             tx.send(ThreadCommand::Reset).unwrap();
                         }
                         _ => (),
