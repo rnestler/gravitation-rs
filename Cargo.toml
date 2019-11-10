@@ -9,5 +9,5 @@ piston_window = "0.60"
 time = "0.1"
 
 [dev-dependencies.sdl2]
-version = "*"
+version = "0.27"
 features = ["gfx"]
