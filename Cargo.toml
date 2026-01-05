@@ -9,5 +9,5 @@ rand = "0.3"
 time = "0.1"
 
 [dev-dependencies.sdl2]
-version = "*"
+version = "0.30"
 features = ["gfx"]
