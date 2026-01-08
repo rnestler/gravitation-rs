@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc::channel;
 use std::thread;
 
-use piston_window::{WindowSettings, PistonWindow, clear, ellipse};
+use piston_window::{WindowSettings, PistonWindow, graphics};
 use rand::Rng;
 
 use gravitation::*;
@@ -57,7 +57,8 @@ fn main() {
     });
 
     while let Some(e) = window.next() {
-        window.draw_2d(&e, |c, g| {
+        use graphics::*;
+        window.draw_2d(&e, |c, g, _| {
             clear([0.0; 4], g);
             let mut visible_counter = 0; // Number of visible stars
             let world_copy = world.lock().unwrap().clone();
