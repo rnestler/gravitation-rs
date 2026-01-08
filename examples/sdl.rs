@@ -38,7 +38,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let mut renderer = window.renderer().build().unwrap();
+    let mut renderer = window.into_canvas().build().unwrap();
     let mut events = sdl_context.event_pump().unwrap();
     let world = Arc::new(Mutex::new(make_world()));
 
